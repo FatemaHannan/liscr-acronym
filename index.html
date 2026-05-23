@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LISCR Acronym Manager</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+:root{--navy:#0a1628;--deep:#0d1f3c;--blue:#1a3a6b;--accent:#c8972a;--gold:#e8b84b;--light:#f4f1eb;--white:#fff;--muted:#8a9ab5;--bg:#0a1628;--card:#0d1f3c;--text:#f4f1eb;--border:#ffffff12;}
+body.light{--bg:#f0f4f8;--card:#fff;--text:#1a2a3a;--border:#dde3ee;--muted:#6b7c93;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .3s,color .3s;}
+.topbar{background:var(--card);border-bottom:1px solid var(--border);padding:0 20px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;gap:8px;}
+.topbar-brand{font-family:"Syne",sans-serif;font-size:20px;font-weight:800;color:var(--text);}
+.topbar-brand span{color:var(--gold);}
+.topbar-right{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;}
+.nav-tabs{display:flex;border-bottom:1px solid var(--border);padding:0 16px;background:var(--card);overflow-x:auto;}
+.nav-tab{padding:11px 16px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;background:none;border-left:none;border-right:none;border-top:none;white-space:nowrap;}
+.nav-tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+.page{display:none;padding:20px;}
+.page.active{display:block;}
+.hero{text-align:center;padding:24px 12px 16px;max-width:640px;margin:0 auto;}
+.hero h1{font-family:"Syne",sans-serif;font-size:clamp(18px,4vw,26px);font-weight:800;margin-bottom:6px;}
+.hero p{color:var(--muted);font-size:13px;margin-bottom:14px;}
+.search-box{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 14px;}
+.search-box input{flex:1;background:none;border:none;outline:none;color:var(--text);font-size:14px;}
+.search-box input::placeholder{color:var(--muted);}
+.filter-row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:10px;}
+.fbtn{padding:5px 12px;border-radius:20px;font-size:11px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;}
+.fbtn.active{background:var(--accent);color:#0a1628;border-color:var(--accent);font-weight:600;}
+.az-row{display:flex;gap:3px;justify-content:center;flex-wrap:wrap;margin:10px auto;max-width:700px;}
+.az-btn{width:28px;height:28px;border-radius:5px;font-size:11px;font-weight:600;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;}
+.az-btn.active{background:var(--accent);color:#0a1628;border-color:var(--accent);}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;max-width:1200px;margin:0 auto;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;transition:all .2s;}
+.card:hover{border-color:var(--gold);transform:translateY(-2px);}
+.card-acr{font-family:"Syne",sans-serif;font-size:16px;font-weight:800;color:var(--gold);display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+.card-meaning{font-size:13px;line-height:1.4;margin-bottom:6px;}
+.card-desc{font-size:11px;color:var(--muted);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.fav-btn{background:none;border:none;cursor:pointer;font-size:15px;padding:2px;line-height:1;}
+.tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;}
+.tag{font-size:10px;padding:2px 7px;border-radius:8px;font-weight:600;}
+.tag-d{background:#3a2a00;color:#e8b84b;}
+.tag-c{background:#1a3a6b;color:#7eb8f7;}
+.tag-l{background:#1a4a2e;color:#5dd68c;}
+.modal-overlay{display:none;position:fixed;inset:0;background:#00000075;z-index:200;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:500px;max-height:88vh;overflow-y:auto;position:relative;}
+.modal-close{position:absolute;top:12px;right:12px;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;}
+.modal-acr{font-family:"Syne",sans-serif;font-size:28px;font-weight:800;color:var(--gold);margin-bottom:4px;}
+.modal-meaning{font-size:16px;margin-bottom:14px;line-height:1.4;}
+.modal-section{margin-bottom:12px;}
+.modal-label{font-size:11px;color:var(--gold);letter-spacing:1px;text-transform:uppercase;font-weight:700;margin-bottom:4px;}
+.modal-value{font-size:13px;line-height:1.6;}
+.flip-wrap{text-align:center;max-width:620px;margin:0 auto 24px;padding:0 12px;}
+.flip-wrap h2{font-family:"Syne",sans-serif;font-size:20px;font-weight:700;margin-bottom:6px;}
+.flip-input{width:100%;padding:12px 18px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:"Syne",sans-serif;font-size:18px;font-weight:600;text-transform:uppercase;outline:none;text-align:center;letter-spacing:2px;}
+.flip-input:focus{border-color:var(--gold);}
+.flip-input::placeholder{color:var(--muted);font-size:13px;letter-spacing:1px;text-transform:none;font-weight:400;}
+.flip-result{max-width:620px;margin:0 auto;}
+.flip-scene{width:100%;height:150px;perspective:800px;cursor:pointer;margin:0 auto 10px;display:block;}
+.flip-inner{position:relative;width:100%;height:100%;transition:transform .6s cubic-bezier(.4,0,.2,1);transform-style:preserve-3d;}
+.flip-scene.flipped .flip-inner{transform:rotateY(180deg);}
+.flip-face{position:absolute;inset:0;border-radius:16px;backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;}
+.flip-front{background:linear-gradient(135deg,#1a3a6b,#0d2a52);border:2px solid #ffffff15;}
+.flip-back{background:linear-gradient(135deg,#8a6820,#c8972a);border:2px solid #ffffff20;transform:rotateY(180deg);}
+.acr-big{font-family:"Syne",sans-serif;font-size:38px;font-weight:800;color:var(--gold);letter-spacing:4px;line-height:1;}
+.tap-hint{font-size:11px;color:#ffffff35;margin-top:8px;letter-spacing:1px;}
+.mean-big{font-family:"Syne",sans-serif;font-size:16px;font-weight:700;color:#0a1628;text-align:center;line-height:1.3;}
+.flip-lbl{font-size:10px;color:#0a1628;opacity:.5;margin-top:6px;letter-spacing:1px;text-transform:uppercase;}
+.flip-hint{font-size:13px;color:var(--muted);text-align:center;margin-top:8px;}
+.flip-ph{text-align:center;padding:40px 16px;}
+.flip-ph .icon{font-size:52px;margin-bottom:12px;opacity:.3;}
+.desc-box{display:none;margin-top:12px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;max-width:620px;margin-left:auto;margin-right:auto;}
+.desc-box-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.desc-box-title{font-size:11px;color:var(--gold);letter-spacing:1px;text-transform:uppercase;font-weight:700;}
+.desc-box-text{font-size:13px;line-height:1.6;overflow:hidden;max-height:80px;transition:max-height .3s ease;}
+.toggle-btn{background:none;border:1px solid var(--border);color:var(--muted);font-size:11px;padding:3px 10px;border-radius:20px;cursor:pointer;}
+.admin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;}
+.acard{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;}
+.acard h3{font-family:"Syne",sans-serif;font-size:14px;font-weight:700;margin-bottom:16px;color:var(--gold);}
+.afield{margin-bottom:11px;}
+.afield label{display:block;font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
+.afield input,.afield select,.afield textarea{width:100%;padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:"DM Sans",sans-serif;font-size:13px;outline:none;transition:border-color .2s;}
+.afield input:focus,.afield select:focus,.afield textarea:focus{border-color:var(--gold);}
+.afield textarea{resize:vertical;min-height:130px;}
+.afield select option{background:var(--card);}
+.btn-save{width:100%;padding:10px;background:var(--accent);color:#0a1628;border:none;border-radius:7px;font-family:"Syne",sans-serif;font-size:13px;font-weight:700;cursor:pointer;margin-top:6px;}
+.btn-save:hover{background:var(--gold);}
+.btn-save:disabled{background:#555;cursor:not-allowed;}
+.item-list{max-height:280px;overflow-y:auto;margin-top:10px;}
+.list-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:4px;background:var(--bg);border:1px solid var(--border);font-size:13px;}
+.list-lbl{color:var(--gold);font-family:"Syne",sans-serif;font-weight:700;flex-shrink:0;min-width:65px;font-size:12px;}
+.list-val{color:var(--muted);font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.btn-del{background:#e74c3c20;color:#e74c3c;border:1px solid #e74c3c30;padding:4px 8px;border-radius:5px;font-size:11px;cursor:pointer;flex-shrink:0;}
+.btn-edit-sm{background:#1a3a6b;color:#7eb8f7;border:1px solid #1a3a6b;padding:4px 8px;border-radius:5px;font-size:11px;cursor:pointer;flex-shrink:0;}
+.btn-edit-sm.editing{background:var(--accent);color:#0a1628;border-color:var(--accent);}
+.mbar{padding:8px 12px;border-radius:7px;font-size:12px;margin-bottom:10px;display:none;}
+.mbar.ok{background:#2ecc7120;color:#2ecc71;border:1px solid #2ecc7140;display:block;}
+.mbar.err{background:#e74c3c20;color:#e74c3c;border:1px solid #e74c3c40;display:block;}
+.mbar.warn{background:#e8b84b20;color:#e8b84b;border:1px solid #e8b84b40;display:block;}
+.changelog-list{max-height:220px;overflow-y:auto;}
+.cl-item{padding:8px 10px;border-radius:7px;margin-bottom:4px;background:var(--bg);border-left:3px solid var(--accent);font-size:12px;}
+.cl-who{color:var(--gold);font-weight:600;}
+.cl-when{color:var(--muted);float:right;}
+.cl-desc{margin-top:3px;color:var(--text);clear:both;}
+.sync-st{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 8px;border-radius:20px;}
+.sync-st.ok{background:#2ecc7120;color:#2ecc71;}
+.sync-st.err{background:#e74c3c20;color:#e74c3c;}
+.sync-st.pending{background:#e8b84b20;color:#e8b84b;}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:currentColor;}
+.suggest-box{position:absolute;top:100%;left:0;right:0;background:var(--card);border:1px solid var(--gold);border-radius:0 0 8px 8px;max-height:200px;overflow-y:auto;z-index:50;box-shadow:0 8px 24px #00000050;display:none;}
+.suggest-item{padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center;}
+.suggest-item:hover{background:#1a3a6b;}
+.chat-box{background:var(--card);border:1px solid var(--border);border-radius:14px;min-height:400px;max-height:500px;overflow-y:auto;padding:18px;margin-bottom:12px;display:flex;flex-direction:column;gap:12px;}
+.bubble{display:flex;}
+.bubble.user{justify-content:flex-end;}
+.bubble-inner{max-width:80%;padding:11px 14px;border-radius:14px;font-size:13px;line-height:1.6;}
+.bubble.user .bubble-inner{background:var(--blue);border-radius:14px 14px 4px 14px;}
+.bubble.ai .bubble-inner{background:#ffffff10;border-radius:14px 14px 14px 4px;}
+.tbtn{padding:6px 12px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text);transition:all .2s;}
+.tbtn:hover{border-color:var(--gold);}
+.theme-btn{width:32px;height:32px;border-radius:7px;font-size:15px;display:flex;align-items:center;justify-content:center;padding:0;}
+.lang-sel{padding:5px 8px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none;cursor:pointer;}
+.badge-admin{background:var(--accent);color:#0a1628;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;}
+.loading{display:none;position:fixed;inset:0;background:#0a162875;z-index:300;align-items:center;justify-content:center;flex-direction:column;gap:12px;}
+.loading.show{display:flex;}
+.spinner{width:36px;height:36px;border:3px solid #ffffff20;border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-5px)}}
+.empty{text-align:center;color:var(--muted);font-size:13px;padding:20px;}
+.img-preview{display:none;margin-top:8px;}
+.img-preview img{max-width:100%;max-height:130px;border-radius:8px;object-fit:cover;}
+.export-btns{display:none;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px;}
+.live-badge{position:fixed;bottom:20px;right:20px;background:#2ecc71;color:#0a1628;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 20px #00000040;transition:opacity .5s;opacity:0;pointer-events:none;}
+@media(max-width:600px){.grid{grid-template-columns:1fr;}.admin-grid{grid-template-columns:1fr;}}
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-thumb{background:#ffffff20;border-radius:3px;}
+</style>
+</head>
+<body>
+<div class="loading" id="loading"><div class="spinner"></div><p id="loading-txt" style="color:var(--muted);font-size:13px;">Loading...</p></div>
+<div class="live-badge" id="live-badge"></div>
+
+<div class="topbar">
+  <div class="topbar-brand">LIS<span>CR</span> <span style="font-size:13px;font-weight:400;color:var(--muted);">Acronyms</span></div>
+  <div class="topbar-right">
+    <select class="lang-sel" id="lang-sel" onchange="setLang(this.value)">
+      <option value="en">EN</option><option value="fr">FR</option><option value="es">ES</option>
+      <option value="ar">AR</option><option value="zh">ZH</option><option value="pt">PT</option>
+    </select>
+    <button class="tbtn theme-btn" id="theme-btn" onclick="toggleTheme()">🌙</button>
+    <span class="sync-st pending" id="sync-ind"><span class="sync-dot"></span><span id="sync-txt">Connecting...</span></span>
+    <span class="badge-admin" id="admin-badge" style="display:none">Admin</span>
+    <button class="tbtn" id="logout-btn" style="display:none" onclick="doLogout()">Sign Out</button>
+    <button class="tbtn" id="login-btn" onclick="showLoginModal()">Admin Login</button>
+  </div>
+</div>
+
+<div class="nav-tabs">
+  <button class="nav-tab active" onclick="showPage('glossary')">📖 Glossary</button>
+  <button class="nav-tab" onclick="showPage('cards')">🃏 Flip Cards</button>
+  <button class="nav-tab" onclick="showPage('ai')">🤖 Ask AI</button>
+  <button class="nav-tab admin-only" onclick="showPage('admin')" style="display:none">⚙️ Admin</button>
+</div>
+
+<!-- GLOSSARY -->
+<div class="page active" id="page-glossary">
+  <div class="hero">
+    <h1>LISCR Acronym Glossary</h1>
+    <p>Search any acronym or meaning to find its full definition</p>
+    <div class="search-box">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input type="text" id="search-input" placeholder="Search acronyms, meanings..." oninput="filterGlossary(this.value)" />
+    </div>
+    <div class="filter-row">
+      <button class="fbtn active" onclick="setFilter('all',this)">All <span id="count-lbl"></span></button>
+      <button class="fbtn" onclick="setFilter('fav',this)">⭐ Favourites</button>
+      <button class="fbtn" onclick="setFilter('desc',this)">Has Description</button>
+    </div>
+    <div class="az-row" id="az-row"></div>
+    <div class="export-btns" id="export-btns">
+      <button onclick="exportCSV()" style="padding:6px 14px;border-radius:7px;background:#2ecc7120;color:#2ecc71;border:1px solid #2ecc7140;cursor:pointer;font-size:12px;">⬇ CSV</button>
+      <button onclick="exportExcel()" style="padding:6px 14px;border-radius:7px;background:#2ecc7120;color:#2ecc71;border:1px solid #2ecc7140;cursor:pointer;font-size:12px;">⬇ Excel</button>
+      <button onclick="document.getElementById('imp-file').click()" style="padding:6px 14px;border-radius:7px;background:#e8b84b20;color:#e8b84b;border:1px solid #e8b84b40;cursor:pointer;font-size:12px;">⬆ Import</button>
+      <input type="file" id="imp-file" accept=".csv" style="display:none" onchange="handleImport(this)" />
+    </div>
+  </div>
+  <div class="grid" id="gloss-grid"></div>
+  <div class="empty" id="gloss-empty" style="display:none;">No acronyms match your search.</div>
+</div>
+
+<!-- FLIP CARDS -->
+<div class="page" id="page-cards">
+  <div class="flip-wrap">
+    <h2>Acronym Flash Cards</h2>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:14px;">Type an acronym or meaning — flip the card to reveal the other side</p>
+    <input class="flip-input" id="flip-input" type="text" placeholder="Type e.g. BFA or Block Fee..." oninput="doFlipSearch(this.value)" autocomplete="off" />
+  </div>
+  <div class="flip-ph" id="flip-ph"><div class="icon">🃏</div><p style="color:var(--muted);font-size:13px;">Start typing to reveal a card</p></div>
+  <div class="flip-result" id="flip-result" style="display:none">
+    <div class="flip-scene" id="flip-scene" onclick="toggleFlip()">
+      <div class="flip-inner">
+        <div class="flip-face flip-front"><div class="acr-big" id="flip-front"></div><div class="tap-hint">CLICK TO REVEAL</div></div>
+        <div class="flip-face flip-back"><div class="mean-big" id="flip-back"></div><div class="flip-lbl">Full Meaning</div></div>
+      </div>
+    </div>
+    <div class="flip-hint" id="flip-hint"></div>
+    <div class="desc-box" id="desc-box">
+      <div class="desc-box-hdr">
+        <span class="desc-box-title">📝 Description</span>
+        <button class="toggle-btn" id="desc-toggle" onclick="toggleDesc()">Show more</button>
+      </div>
+      <div class="desc-box-text" id="desc-box-text"></div>
+    </div>
+  </div>
+  <div style="display:none;text-align:center;padding:30px;color:var(--muted);font-size:13px;" id="flip-nf">No match found</div>
+</div>
+
+<!-- ASK AI -->
+<div class="page" id="page-ai">
+  <div style="max-width:720px;margin:0 auto;">
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:4px;">🤖 Maritime AI Assistant</div>
+      <p style="color:var(--muted);font-size:13px;">Only answers maritime and LISCR related questions</p>
+    </div>
+    <div class="chat-box" id="chat-box">
+      <div id="ai-welcome" style="text-align:center;margin:auto;">
+        <div style="font-size:44px;margin-bottom:10px;">⚓</div>
+        <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:14px;">Maritime AI Ready</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;">
+          <button onclick="askQ(this)" style="padding:6px 12px;background:#ffffff10;border:1px solid #ffffff15;border-radius:20px;color:var(--text);font-size:12px;cursor:pointer;">What is SOLAS?</button>
+          <button onclick="askQ(this)" style="padding:6px 12px;background:#ffffff10;border:1px solid #ffffff15;border-radius:20px;color:var(--text);font-size:12px;cursor:pointer;">Explain ISM Code</button>
+          <button onclick="askQ(this)" style="padding:6px 12px;background:#ffffff10;border:1px solid #ffffff15;border-radius:20px;color:var(--text);font-size:12px;cursor:pointer;">What does DPA stand for?</button>
+          <button onclick="askQ(this)" style="padding:6px 12px;background:#ffffff10;border:1px solid #ffffff15;border-radius:20px;color:var(--text);font-size:12px;cursor:pointer;">What is Port State Control?</button>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <input type="text" id="ai-input" placeholder="Ask a maritime question..." style="flex:1;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;outline:none;" onkeydown="if(event.key==='Enter')sendAI();" />
+      <button onclick="sendAI()" id="ai-btn" style="padding:12px 20px;background:var(--accent);color:#0a1628;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;cursor:pointer;">Send</button>
+    </div>
+    <p style="text-align:center;font-size:11px;color:var(--muted);margin-top:6px;">Only answers maritime & LISCR related questions</p>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div class="page" id="page-admin">
+  <div class="admin-grid">
+    <div class="acard" style="grid-column:1/-1">
+      <h3>➕ Add / Edit Acronym</h3>
+      <div id="acr-msg" class="mbar"></div>
+      <div id="dup-warn" class="mbar warn" style="display:none;"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="afield" style="position:relative;">
+          <label>Acronym * (type to search & edit)</label>
+          <input type="text" id="new-acr" placeholder="e.g. BFA" style="text-transform:uppercase" oninput="acrSuggest(this.value)" onblur="setTimeout(()=>{document.getElementById('acr-sug').style.display='none'},200)" autocomplete="off" />
+          <div class="suggest-box" id="acr-sug"></div>
+        </div>
+        <div class="afield"><label>Full Meaning *</label><input type="text" id="new-meaning" placeholder="e.g. Block Fee Agreement" oninput="checkDup(this.value)" /></div>
+        <div class="afield" style="grid-column:1/-1"><label>Description (optional)</label><textarea id="new-desc" placeholder="Full description, context, usage details..."></textarea></div>
+        <div class="afield"><label>Contact Person (optional)</label><input type="text" id="new-contact" placeholder="e.g. John Smith" /></div>
+        <div class="afield"><label>Link (optional)</label><input type="url" id="new-link" placeholder="https://..." /></div>
+        <div class="afield" style="grid-column:1/-1">
+          <label>Image (optional)</label>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <button type="button" onclick="document.getElementById('img-file').click()" style="padding:7px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;cursor:pointer;">📷 Upload</button>
+            <input type="file" id="img-file" accept="image/*" style="display:none" onchange="previewImg(this)" />
+            <span id="img-name" style="font-size:12px;color:var(--muted);">No image</span>
+            <button type="button" id="img-clear" onclick="clearImg()" style="display:none;padding:4px 8px;background:#e74c3c20;color:#e74c3c;border:1px solid #e74c3c30;border-radius:5px;font-size:11px;cursor:pointer;">✕ Remove</button>
+          </div>
+          <div class="img-preview" id="img-preview"><img id="img-prev-img" src="" /></div>
+          <input type="hidden" id="img-data" />
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button class="btn-save" id="btn-save-acr" onclick="saveAcronym()" style="flex:1">Save Acronym</button>
+        <button class="tbtn" id="btn-cancel" onclick="cancelEdit()" style="display:none;">✕ Cancel</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:16px;margin-bottom:8px;">
+        <div style="flex:1;display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:7px 11px;">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input type="text" id="acr-list-search" placeholder="Search list to edit/delete..." oninput="renderAcrList(this.value)" style="flex:1;background:none;border:none;outline:none;color:var(--text);font-size:12px;" />
+        </div>
+        <span id="acr-list-count" style="font-size:12px;color:var(--muted);white-space:nowrap;"></span>
+      </div>
+      <div class="item-list" id="acr-list"></div>
+    </div>
+    <div class="acard">
+      <h3>👤 Manage Users</h3>
+      <div id="usr-msg" class="mbar"></div>
+      <div class="afield"><label>Email (@liscr.com)</label><input type="email" id="new-email" placeholder="name@liscr.com" /></div>
+      <div class="afield"><label>Password</label><input type="text" id="new-pass" placeholder="Min 8 characters" /></div>
+      <div class="afield"><label>Role</label><select id="new-role"><option value="user">User</option><option value="admin">Admin</option></select></div>
+      <button class="btn-save" onclick="addUser()">Add User</button>
+      <div class="item-list" id="usr-list"></div>
+    </div>
+    <div class="acard">
+      <h3>🔑 Change Password</h3>
+      <div id="cpw-msg" class="mbar"></div>
+      <div class="afield"><label>Select User</label><select id="cpw-user" style="width:100%;padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:13px;outline:none;"></select></div>
+      <div class="afield"><label>New Password</label><input type="text" id="cpw-new" placeholder="Min 8 characters" /></div>
+      <button class="btn-save" onclick="changePass()">Update Password</button>
+    </div>
+    <div class="acard" style="grid-column:1/-1">
+      <h3>📜 Change Log <span style="font-size:11px;color:var(--muted);font-weight:400;">(live from Supabase)</span></h3>
+      <div class="changelog-list" id="changelog"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="login-modal">
+  <div class="modal-box" style="max-width:360px;">
+    <button class="modal-close" onclick="closeLoginModal()">✕</button>
+    <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:18px;">Admin Sign In</div>
+    <div class="afield"><label>Email</label><input type="email" id="login-email" placeholder="admin@liscr.com" /></div>
+    <div class="afield"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()" /></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+      <input type="checkbox" id="remember-me" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer;" />
+      <label for="remember-me" style="font-size:13px;color:var(--muted);cursor:pointer;">Remember me on this computer</label>
+    </div>
+    <button class="btn-save" onclick="doLogin()">Sign In</button>
+    <div id="login-msg" class="mbar" style="margin-top:8px;margin-bottom:0;"></div>
+  </div>
+</div>
+<div class="modal-overlay" id="detail-modal">
+  <div class="modal-box"><div id="detail-content"></div></div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+//  SUPABASE CONFIG
+// ══════════════════════════════════════
+const SUPABASE_URL = 'https://rubepxkuzmdzsrcfemrb.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1YmVweGt1em1kenNyY2ZlbXJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NTU2MDYsImV4cCI6MjA5NTEzMTYwNn0.pAZ4VByPJ-0LxajpzhdW_Ol_ZEnNAVqMVNWvIwiBlj4';
+
+async function sbGet(table, query=''){
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}${query}`, {
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' }
+  });
+  if(!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbPost(table, body){
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+    method: 'POST',
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+    body: JSON.stringify(body)
+  });
+  if(!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbPatch(table, id, body){
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+    method: 'PATCH',
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+    body: JSON.stringify(body)
+  });
+  if(!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbDelete(table, id){
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+    method: 'DELETE',
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+  });
+  if(!r.ok) throw new Error(await r.text());
+}
+
+// ══════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════
+let cachedAcrs = [];
+let currentUser = null;
+let editingId = null;
+let currentFilter = 'all';
+let currentLetter = '';
+let aiHistory = [];
+
+// ══════════════════════════════════════
+//  LOAD DATA
+// ══════════════════════════════════════
+async function loadAcrs(){
+  try{
+    setSyncInd('pending','Connecting...');
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/acronyms?select=*&order=acronym.asc`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    if(!Array.isArray(data)) throw new Error(JSON.stringify(data));
+    cachedAcrs = data;
+    setSyncInd('ok','Live ✓ (' + data.length + ')');
+    renderGlossary();
+  }catch(e){
+    setSyncInd('err','Error: ' + e.message);
+    console.error('loadAcrs error:', e);
+  }
+}
+
+// ══════════════════════════════════════
+//  LIVE SYNC — Supabase Realtime
+// ══════════════════════════════════════
+function startRealtime(){
+  // Poll every 15 seconds for changes
+  setInterval(async ()=>{
+    try{
+      const data = await sbGet('acronyms','?select=id,acronym,meaning,description,contact,link,image,updated_at&order=updated_at.desc&limit=1');
+      if(!data.length) return;
+      const latest = data[0].updated_at;
+      if(latest !== window._lastUpdate){
+        window._lastUpdate = latest;
+        await loadAcrs();
+        showLiveBadge('🔄 Data updated by another user');
+      }
+    }catch(e){}
+  }, 15000);
+}
+
+function showLiveBadge(msg){
+  const b = document.getElementById('live-badge');
+  b.textContent = msg; b.style.opacity = '1';
+  setTimeout(()=>{ b.style.opacity='0'; }, 4000);
+}
+
+// ══════════════════════════════════════
+//  AUTH
+// ══════════════════════════════════════
+function showLoginModal(){ document.getElementById('login-modal').classList.add('show'); setTimeout(()=>document.getElementById('login-email').focus(),100); }
+function closeLoginModal(){ document.getElementById('login-modal').classList.remove('show'); }
+
+async function doLogin(){
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  const pass = document.getElementById('login-pass').value;
+  const remember = document.getElementById('remember-me').checked;
+  const msg = document.getElementById('login-msg');
+  if(!email.endsWith('@liscr.com')){ showMsg(msg,'Only @liscr.com emails allowed','err'); return; }
+  try{
+    const users = await sbGet('users',`?email=eq.${encodeURIComponent(email)}&password=eq.${encodeURIComponent(pass)}&select=*`);
+    if(!users.length){ showMsg(msg,'Invalid email or password','err'); return; }
+    const user = users[0];
+    if(remember) localStorage.setItem('liscr_session', JSON.stringify({email:user.email, role:user.role, ts:Date.now()}));
+    applyLogin(user);
+    closeLoginModal();
+  }catch(e){ showMsg(msg,'Error: '+e.message,'err'); }
+}
+
+function applyLogin(user){
+  currentUser = user;
+  document.getElementById('admin-badge').style.display='';
+  document.getElementById('logout-btn').style.display='';
+  document.getElementById('login-btn').style.display='none';
+  document.getElementById('export-btns').style.display='flex';
+  document.querySelectorAll('.admin-only').forEach(el=>el.style.display='');
+}
+
+function doLogout(){
+  currentUser = null;
+  localStorage.removeItem('liscr_session');
+  document.getElementById('admin-badge').style.display='none';
+  document.getElementById('logout-btn').style.display='none';
+  document.getElementById('login-btn').style.display='';
+  document.getElementById('export-btns').style.display='none';
+  document.querySelectorAll('.admin-only').forEach(el=>el.style.display='none');
+  showPage('glossary');
+}
+
+function checkSession(){
+  try{
+    const s = localStorage.getItem('liscr_session');
+    if(!s) return;
+    const session = JSON.parse(s);
+    if(Date.now() - session.ts > 30*24*60*60*1000){ localStorage.removeItem('liscr_session'); return; }
+    applyLogin({email:session.email, role:session.role});
+  }catch(e){ localStorage.removeItem('liscr_session'); }
+}
+
+// ══════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════
+function showPage(p){
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  const tabs = document.querySelectorAll('.nav-tab');
+  const map = {glossary:0,cards:1,ai:2,admin:3};
+  if(tabs[map[p]]) tabs[map[p]].classList.add('active');
+  if(p==='admin'){ renderAcrList(); renderUsrList(); renderChangelog(); }
+}
+
+// ══════════════════════════════════════
+//  GLOSSARY
+// ══════════════════════════════════════
+function buildAZ(){
+  const letters = ['All','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','#'];
+  document.getElementById('az-row').innerHTML = letters.map(l=>`<button class="az-btn${l==='All'?' active':''}" onclick="setAZ('${l}',this)">${l}</button>`).join('');
+}
+function setAZ(l,btn){ currentLetter=l==='All'?'':l; document.querySelectorAll('.az-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); filterGlossary(document.getElementById('search-input').value); }
+function setFilter(f,btn){ currentFilter=f; document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); filterGlossary(document.getElementById('search-input').value); }
+function renderGlossary(){
+  const el = document.getElementById('count-lbl');
+  if(el) el.textContent = '(' + cachedAcrs.length + ')';
+  const q = document.getElementById('search-input');
+  filterGlossary(q ? q.value : '');
+}
+function filterGlossary(q){
+  if(!cachedAcrs || !cachedAcrs.length){
+    const g=document.getElementById('gloss-grid'); if(g) g.innerHTML='';
+    const e=document.getElementById('gloss-empty'); if(e){e.style.display='block';e.textContent='Loading...';}
+    return;
+  }
+  const query = (q||'').toLowerCase();
+  const favs = getFavs();
+  let filtered = cachedAcrs.filter(a=>{
+    if(currentFilter==='fav' && !favs.includes(a.acronym)) return false;
+    if(currentFilter==='desc' && !a.description) return false;
+    if(currentLetter && !a.acronym.toUpperCase().startsWith(currentLetter)) return false;
+    if(!query) return true;
+    return a.acronym.toLowerCase().includes(query) || a.meaning.toLowerCase().includes(query) || (a.description&&a.description.toLowerCase().includes(query));
+  });
+  renderCards(filtered);
+}
+function renderCards(items){
+  const grid = document.getElementById('gloss-grid');
+  const empty = document.getElementById('gloss-empty');
+  if(!items.length){ grid.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  const favs = getFavs();
+  grid.innerHTML = items.map(a=>`
+    <div class="card" onclick="openDetail(${a.id})">
+      <div class="card-acr"><span>${esc(a.acronym)}</span><button class="fav-btn" onclick="toggleFav('${esc(a.acronym)}',event)">${favs.includes(a.acronym)?'⭐':'☆'}</button></div>
+      <div class="card-meaning">${esc(a.meaning)}</div>
+      ${a.description?`<div class="card-desc">${esc(a.description)}</div>`:''}
+      <div class="tags">
+        ${a.description?'<span class="tag tag-d">📝 Desc</span>':''}
+        ${a.contact?'<span class="tag tag-c">👤 Contact</span>':''}
+        ${a.link?'<span class="tag tag-l">🔗 Link</span>':''}
+      </div>
+    </div>`).join('');
+}
+function getFavs(){ try{return JSON.parse(localStorage.getItem('liscr_favs')||'[]');}catch(e){return[];} }
+function toggleFav(acr,e){
+  e.stopPropagation();
+  let favs=getFavs(); const i=favs.indexOf(acr);
+  if(i===-1)favs.push(acr);else favs.splice(i,1);
+  localStorage.setItem('liscr_favs',JSON.stringify(favs));
+  filterGlossary(document.getElementById('search-input').value);
+}
+function openDetail(id){
+  const a = cachedAcrs.find(x=>x.id===id);
+  if(!a) return;
+  document.getElementById('detail-content').innerHTML=`
+    <button class="modal-close" onclick="document.getElementById('detail-modal').classList.remove('show')">✕</button>
+    <div class="modal-acr">${esc(a.acronym)}</div>
+    <div class="modal-meaning">${esc(a.meaning)}</div>
+    ${a.description?`<div class="modal-section"><div class="modal-label">Description</div><div class="modal-value">${esc(a.description).replace(/\n/g,'<br>')}</div></div>`:''}
+    ${a.image?`<img src="${a.image}" style="width:100%;border-radius:10px;margin-top:10px;max-height:200px;object-fit:cover;" />`:''}
+    ${a.contact?`<div class="modal-section"><div class="modal-label">Contact</div><div class="modal-value">👤 ${esc(a.contact)}</div></div>`:''}
+    ${a.link?`<div class="modal-section"><div class="modal-label">Link</div><div class="modal-value"><a href="${esc(a.link)}" target="_blank" style="color:var(--gold)">🔗 ${esc(a.link)}</a></div></div>`:''}`;
+  document.getElementById('detail-modal').classList.add('show');
+}
+
+// ══════════════════════════════════════
+//  FLIP CARDS
+// ══════════════════════════════════════
+function doFlipSearch(val){
+  const q=val.trim(), r=document.getElementById('flip-result'), nf=document.getElementById('flip-nf'), ph=document.getElementById('flip-ph'), db=document.getElementById('desc-box');
+  if(!q){r.style.display='none';nf.style.display='none';ph.style.display='block';db.style.display='none';return;}
+  let m=cachedAcrs.find(a=>a.acronym.toLowerCase()===q.toLowerCase()),byAcr=true;
+  if(!m)m=cachedAcrs.find(a=>a.acronym.toLowerCase().startsWith(q.toLowerCase()));
+  if(!m){m=cachedAcrs.find(a=>a.meaning.toLowerCase().includes(q.toLowerCase()));byAcr=false;}
+  ph.style.display='none';
+  if(!m){r.style.display='none';nf.style.display='block';return;}
+  nf.style.display='none';r.style.display='block';
+  document.getElementById('flip-scene').classList.remove('flipped');
+  if(byAcr){document.getElementById('flip-front').textContent=m.acronym;document.getElementById('flip-back').textContent=m.meaning;document.getElementById('flip-hint').textContent='← Click card to reveal full meaning →';}
+  else{document.getElementById('flip-front').textContent=m.meaning;document.getElementById('flip-back').textContent=m.acronym;document.getElementById('flip-hint').textContent='← Click card to reveal acronym →';}
+  if(m.description){document.getElementById('desc-box-text').textContent=m.description;document.getElementById('desc-box-text').style.maxHeight='80px';document.getElementById('desc-toggle').textContent='Show more';db.style.display='block';}
+  else{db.style.display='none';}
+}
+function toggleFlip(){document.getElementById('flip-scene').classList.toggle('flipped');}
+function toggleDesc(){const el=document.getElementById('desc-box-text'),btn=document.getElementById('desc-toggle'),exp=el.style.maxHeight==='none';el.style.maxHeight=exp?'80px':'none';btn.textContent=exp?'Show more':'Show less';}
+
+// ══════════════════════════════════════
+//  AI
+// ══════════════════════════════════════
+function askQ(btn){document.getElementById('ai-input').value=btn.textContent;sendAI();}
+function addBubble(role,text){
+  const w=document.getElementById('ai-welcome');if(w)w.style.display='none';
+  const box=document.getElementById('chat-box'),d=document.createElement('div');d.className='bubble '+role;
+  const safe=text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+  d.innerHTML=`<div class="bubble-inner">${safe}</div>`;box.appendChild(d);box.scrollTop=box.scrollHeight;
+}
+function addTyping(){
+  const box=document.getElementById('chat-box'),d=document.createElement('div');d.className='bubble ai';d.id='ai-typing';
+  d.innerHTML=`<div class="bubble-inner" style="display:flex;gap:5px;align-items:center;"><span style="width:7px;height:7px;border-radius:50%;background:var(--muted);animation:bounce 1s infinite 0s;display:inline-block"></span><span style="width:7px;height:7px;border-radius:50%;background:var(--muted);animation:bounce 1s infinite .2s;display:inline-block"></span><span style="width:7px;height:7px;border-radius:50%;background:var(--muted);animation:bounce 1s infinite .4s;display:inline-block"></span></div>`;
+  box.appendChild(d);box.scrollTop=box.scrollHeight;
+}
+async function sendAI(){
+  const input=document.getElementById('ai-input'),q=input.value.trim();if(!q)return;
+  input.value='';const btn=document.getElementById('ai-btn');btn.disabled=true;btn.textContent='…';
+  addBubble('user',q);addTyping();
+  aiHistory.push({role:'user',content:q});
+  const acrCtx=cachedAcrs.slice(0,150).map(a=>`${a.acronym}: ${a.meaning}`).join('; ');
+  const sys=`You are a maritime AI assistant for LISCR. ONLY answer maritime/LISCR questions. If not maritime related say: I can only answer maritime and LISCR related questions. LISCR acronyms: ${acrCtx}. Be concise and professional.`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:600,system:sys,messages:aiHistory})});
+    const data=await res.json();
+    document.getElementById('ai-typing')?.remove();
+    if(data.error)throw new Error(data.error.message);
+    const reply=data.content?.[0]?.text||'No response.';
+    aiHistory.push({role:'assistant',content:reply});
+    if(aiHistory.length>20)aiHistory=aiHistory.slice(-20);
+    addBubble('ai',reply);
+  }catch(e){
+    document.getElementById('ai-typing')?.remove();
+    addBubble('ai','⚠️ AI unavailable right now. Please try again shortly.');
+  }
+  btn.disabled=false;btn.textContent='Send';
+}
+
+// ══════════════════════════════════════
+//  ADMIN - ACRONYMS
+// ══════════════════════════════════════
+function acrSuggest(val){
+  const sug=document.getElementById('acr-sug'),q=val.trim().toUpperCase();
+  if(!q){sug.style.display='none';return;}
+  const matches=cachedAcrs.filter(a=>a.acronym.toUpperCase().startsWith(q)||a.acronym.toUpperCase().includes(q)||a.meaning.toLowerCase().includes(q.toLowerCase())).slice(0,8);
+  if(!matches.length){sug.style.display='none';return;}
+  sug.innerHTML=matches.map(a=>`<div class="suggest-item" onclick="loadToEdit(${a.id})"><span style="font-family:Syne,sans-serif;font-weight:700;color:var(--gold);min-width:60px;font-size:12px;">${esc(a.acronym)}</span><span style="font-size:12px;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(a.meaning)}</span><span style="font-size:10px;color:var(--accent);">edit →</span></div>`).join('');
+  sug.style.display='block';
+}
+function loadToEdit(id){
+  document.getElementById('acr-sug').style.display='none';
+  const a=cachedAcrs.find(x=>x.id===id);if(!a)return;
+  editingId=a.id;
+  document.getElementById('new-acr').value=a.acronym;
+  document.getElementById('new-meaning').value=a.meaning;
+  document.getElementById('new-desc').value=a.description||'';
+  document.getElementById('new-contact').value=a.contact||'';
+  document.getElementById('new-link').value=a.link||'';
+  if(a.image){document.getElementById('img-data').value=a.image;document.getElementById('img-prev-img').src=a.image;document.getElementById('img-preview').style.display='block';document.getElementById('img-name').textContent='Existing image';document.getElementById('img-clear').style.display='';}
+  else clearImg();
+  document.getElementById('btn-save-acr').textContent='Update Acronym';
+  document.getElementById('btn-cancel').style.display='';
+  document.getElementById('new-acr').scrollIntoView({behavior:'smooth',block:'center'});
+  renderAcrList();
+}
+function checkDup(val){
+  const warn=document.getElementById('dup-warn'),q=val.trim().toLowerCase();
+  if(!q){warn.style.display='none';return;}
+  const dups=cachedAcrs.filter(a=>a.meaning.toLowerCase()===q&&a.id!==editingId);
+  if(dups.length){warn.textContent=`⚠️ This meaning already exists for: ${dups.map(d=>d.acronym).join(', ')}`;warn.style.display='block';}
+  else warn.style.display='none';
+}
+function cancelEdit(){
+  editingId=null;
+  ['new-acr','new-meaning','new-desc','new-contact','new-link'].forEach(id=>document.getElementById(id).value='');
+  clearImg();
+  document.getElementById('btn-save-acr').textContent='Save Acronym';
+  document.getElementById('btn-cancel').style.display='none';
+  document.getElementById('dup-warn').style.display='none';
+  document.getElementById('acr-msg').className='mbar';
+  renderAcrList();
+}
+async function saveAcronym(){
+  const acronym=document.getElementById('new-acr').value.trim().toUpperCase();
+  const meaning=document.getElementById('new-meaning').value.trim();
+  const description=document.getElementById('new-desc').value.trim();
+  const contact=document.getElementById('new-contact').value.trim();
+  const link=document.getElementById('new-link').value.trim();
+  const image=document.getElementById('img-data').value||'';
+  const msg=document.getElementById('acr-msg');
+  const btn=document.getElementById('btn-save-acr');
+  if(!acronym||!meaning){showMsg(msg,'Acronym and Meaning are required','err');return;}
+  if(!editingId){
+    if(cachedAcrs.find(a=>a.acronym.toLowerCase()===acronym.toLowerCase())){showMsg(msg,`"${acronym}" already exists`,'err');return;}
+    const dupM=cachedAcrs.filter(a=>a.meaning.toLowerCase()===meaning.toLowerCase());
+    if(dupM.length&&!confirm(`This meaning already exists for: ${dupM.map(d=>d.acronym).join(', ')}. Add anyway?`))return;
+  }
+  btn.disabled=true;btn.textContent='Saving...';showLoad('Saving to Supabase...');
+  try{
+    if(editingId){
+      await sbPatch('acronyms',editingId,{acronym,meaning,description,contact,link,image,updated_at:new Date().toISOString()});
+    }else{
+      await sbPost('acronyms',{acronym,meaning,description,contact,link,image});
+    }
+    await sbPost('changelog',{who:currentUser.email, description:(editingId?'Edited: ':'Added: ')+acronym+' = '+meaning});
+    await loadAcrs();
+    showMsg(msg,`"${acronym}" ${editingId?'updated':'added'} — visible to all users ✓`,'ok');
+    cancelEdit();renderAcrList();
+  }catch(e){showMsg(msg,'Error: '+e.message,'err');}
+  finally{btn.disabled=false;btn.textContent=editingId?'Update Acronym':'Save Acronym';hideLoad();}
+}
+async function deleteAcronym(id,acr){
+  if(!confirm(`Delete "${acr}"? This removes it for ALL users.`))return;
+  showLoad('Deleting...');
+  try{
+    await sbDelete('acronyms',id);
+    await sbPost('changelog',{who:currentUser.email,description:'Deleted: '+acr});
+    await loadAcrs();renderAcrList();
+  }catch(e){alert('Error: '+e.message);}
+  finally{hideLoad();}
+}
+function renderAcrList(q){
+  const el=document.getElementById('acr-list'),cnt=document.getElementById('acr-list-count');
+  const query=(q||document.getElementById('acr-list-search')?.value||'').toLowerCase();
+  const filtered=query?cachedAcrs.filter(a=>a.acronym.toLowerCase().includes(query)||a.meaning.toLowerCase().includes(query)):cachedAcrs;
+  if(cnt)cnt.textContent=`${filtered.length}/${cachedAcrs.length}`;
+  el.innerHTML=filtered.map(a=>{
+    const isEd=editingId===a.id;
+    return `<div class="list-item" style="${isEd?'border-color:var(--gold);background:#c8972a15;':''}">
+      <span class="list-lbl">${esc(a.acronym)}</span>
+      <span class="list-val">${esc(a.meaning)}</span>
+      ${a.description?'<span title="Has description" style="font-size:12px;">📝</span>':''}
+      <button class="btn-edit-sm${isEd?' editing':''}" onclick="loadToEdit(${a.id})">${isEd?'✏️':'Edit'}</button>
+      <button class="btn-del" onclick="deleteAcronym(${a.id},'${esc(a.acronym)}')">Delete</button>
+    </div>`;
+  }).join('')||'<div class="empty">No acronyms found.</div>';
+}
+
+// ══════════════════════════════════════
+//  ADMIN - USERS
+// ══════════════════════════════════════
+async function addUser(){
+  const email=document.getElementById('new-email').value.trim().toLowerCase();
+  const pass=document.getElementById('new-pass').value.trim();
+  const role=document.getElementById('new-role').value;
+  const msg=document.getElementById('usr-msg');
+  if(!email.endsWith('@liscr.com')){showMsg(msg,'Must be @liscr.com','err');return;}
+  if(pass.length<8){showMsg(msg,'Min 8 characters','err');return;}
+  showLoad('Adding user...');
+  try{
+    const existing=await sbGet('users',`?email=eq.${encodeURIComponent(email)}&select=id`);
+    if(existing.length){showMsg(msg,'User already exists','err');return;}
+    await sbPost('users',{email,password:pass,role});
+    await sbPost('changelog',{who:currentUser.email,description:`Added user: ${email} (${role})`});
+    showMsg(msg,`${email} added ✓`,'ok');
+    document.getElementById('new-email').value='';document.getElementById('new-pass').value='';
+    await renderUsrList();
+  }catch(e){showMsg(msg,'Error: '+e.message,'err');}
+  finally{hideLoad();}
+}
+async function deleteUser(id,email){
+  if(email===currentUser.email){alert("You cannot delete yourself.");return;}
+  if(!confirm('Remove this user?'))return;
+  showLoad('Removing...');
+  try{
+    await sbDelete('users',id);
+    await sbPost('changelog',{who:currentUser.email,description:'Deleted user: '+email});
+    await renderUsrList();
+  }catch(e){alert('Error: '+e.message);}
+  finally{hideLoad();}
+}
+async function renderUsrList(){
+  const el=document.getElementById('usr-list'),cpwSel=document.getElementById('cpw-user');
+  try{
+    const users=await sbGet('users','?select=*&order=email.asc');
+    el.innerHTML=users.map(u=>`<div class="list-item">
+      <span class="list-lbl" style="min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(u.email)}</span>
+      <span style="font-size:10px;padding:2px 7px;border-radius:4px;font-weight:700;text-transform:uppercase;flex-shrink:0;${u.role==='admin'?'background:var(--accent);color:#0a1628;':'background:#ffffff15;color:var(--muted);'}">${u.role}</span>
+      ${u.email!==currentUser?.email?`<button class="btn-del" onclick="deleteUser(${u.id},'${esc(u.email)}')">Remove</button>`:'<span style="font-size:10px;color:var(--muted);">(you)</span>'}
+    </div>`).join('')||'<div class="empty">No users.</div>';
+    if(cpwSel)cpwSel.innerHTML=users.map(u=>`<option value="${u.id}">${esc(u.email)} (${u.role})</option>`).join('');
+  }catch(e){el.innerHTML='<div class="empty">Error loading users.</div>';}
+}
+async function changePass(){
+  const userId=document.getElementById('cpw-user').value;
+  const newP=document.getElementById('cpw-new').value.trim();
+  const msg=document.getElementById('cpw-msg');
+  if(newP.length<8){showMsg(msg,'Min 8 characters','err');return;}
+  showLoad('Updating...');
+  try{
+    await sbPatch('users',userId,{password:newP});
+    const users=await sbGet('users',`?id=eq.${userId}&select=email`);
+    await sbPost('changelog',{who:currentUser.email,description:`Changed password for: ${users[0]?.email}`});
+    document.getElementById('cpw-new').value='';
+    showMsg(msg,'Password updated ✓','ok');
+  }catch(e){showMsg(msg,'Error: '+e.message,'err');}
+  finally{hideLoad();}
+}
+
+// ══════════════════════════════════════
+//  CHANGELOG
+// ══════════════════════════════════════
+async function renderChangelog(){
+  const el=document.getElementById('changelog');
+  try{
+    const log=await sbGet('changelog','?select=*&order=created_at.desc&limit=100');
+    el.innerHTML=log.length?log.map(e=>`<div class="cl-item"><span class="cl-who">${esc(e.who)}</span><span class="cl-when">${new Date(e.created_at).toLocaleString()}</span><div class="cl-desc">${esc(e.description)}</div></div>`).join(''):'<div class="empty">No changes yet.</div>';
+  }catch(e){el.innerHTML='<div class="empty">Error loading changelog.</div>';}
+}
+
+// ══════════════════════════════════════
+//  IMAGE
+// ══════════════════════════════════════
+function previewImg(input){const file=input.files[0];if(!file)return;const reader=new FileReader();reader.onload=e=>{document.getElementById('img-data').value=e.target.result;document.getElementById('img-prev-img').src=e.target.result;document.getElementById('img-preview').style.display='block';document.getElementById('img-name').textContent=file.name;document.getElementById('img-clear').style.display='';};reader.readAsDataURL(file);}
+function clearImg(){document.getElementById('img-data').value='';document.getElementById('img-prev-img').src='';document.getElementById('img-preview').style.display='none';document.getElementById('img-name').textContent='No image';document.getElementById('img-clear').style.display='none';document.getElementById('img-file').value='';}
+
+// ══════════════════════════════════════
+//  EXPORT / IMPORT
+// ══════════════════════════════════════
+function exportCSV(){const rows=[['Acronym','Meaning','Description','Contact','Link'],...cachedAcrs.map(a=>[a.acronym,a.meaning,a.description||'',a.contact||'',a.link||''])];const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');dl('LISCR_Acronyms.csv','text/csv',csv);}
+function exportExcel(){let h='<html><head><meta charset="UTF-8"></head><body><table><tr><th>Acronym</th><th>Meaning</th><th>Description</th></tr>';cachedAcrs.forEach(a=>{h+=`<tr><td>${esc(a.acronym)}</td><td>${esc(a.meaning)}</td><td>${esc(a.description||'')}</td></tr>`;});h+='</table></body></html>';dl('LISCR_Acronyms.xls','application/vnd.ms-excel',h);}
+function dl(name,mime,content){const b=new Blob([content],{type:mime});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u);}
+async function handleImport(input){
+  const file=input.files[0];if(!file)return;
+  showLoad('Importing...');
+  try{
+    const text=await file.text();const lines=text.split('\n').filter(l=>l.trim());const start=lines[0].toLowerCase().includes('acronym')?1:0;
+    let rows=[];for(let i=start;i<lines.length;i++){const cols=lines[i].split(',').map(c=>c.replace(/^"|"$/g,'').trim());if(cols[0]&&cols[1])rows.push({acronym:cols[0].toUpperCase(),meaning:cols[1],description:cols[2]||''});}
+    if(!rows.length){alert('No valid rows found.');input.value='';return;}
+    if(!confirm(`Import ${rows.length} acronyms? Duplicates will be skipped.`)){input.value='';return;}
+    let added=0,skip=0;
+    for(const row of rows){
+      if(cachedAcrs.find(a=>a.acronym.toLowerCase()===row.acronym.toLowerCase())){skip++;continue;}
+      await sbPost('acronyms',row);added++;
+    }
+    await sbPost('changelog',{who:currentUser.email,description:`Bulk imported ${added} acronyms`});
+    await loadAcrs();
+    alert(`✅ Done! ${added} added, ${skip} skipped.`);
+  }catch(e){alert('Error: '+e.message);}
+  finally{hideLoad();input.value='';}
+}
+
+// ══════════════════════════════════════
+//  THEME & LANGUAGE
+// ══════════════════════════════════════
+function toggleTheme(){const l=document.body.classList.toggle('light');document.getElementById('theme-btn').textContent=l?'☀️':'🌙';localStorage.setItem('liscr_theme',l?'light':'dark');}
+function loadTheme(){if(localStorage.getItem('liscr_theme')==='light'){document.body.classList.add('light');document.getElementById('theme-btn').textContent='☀️';}}
+function setLang(l){localStorage.setItem('liscr_lang',l);}
+function loadLang(){const l=localStorage.getItem('liscr_lang');if(l){const s=document.getElementById('lang-sel');if(s)s.value=l;}}
+
+// ══════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════
+function setSyncInd(t,m){const el=document.getElementById('sync-ind');el.className='sync-st '+t;document.getElementById('sync-txt').textContent=m;}
+function showLoad(t){document.getElementById('loading-txt').textContent=t||'Loading...';document.getElementById('loading').classList.add('show');}
+function hideLoad(){document.getElementById('loading').classList.remove('show');}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function showMsg(el,txt,type){el.textContent=txt;el.className='mbar '+type;setTimeout(()=>{el.className='mbar';},5000);}
+
+// ══════════════════════════════════════
+//  BULK SEED
+// ══════════════════════════════════════
+async function bulkSeedToSupabase(){
+  const SEED=[{"acronym":"ADS","meaning":"Audit Discount Schedule"},{"acronym":"AI","meaning":"Artificial Intelligence"},{"acronym":"AIP","meaning":"Approval in Principle"},{"acronym":"AIS","meaning":"Automatic Identification System"},{"acronym":"AMSA","meaning":"Australian Maritime Safety Authority"},{"acronym":"ANOA","meaning":"Advance Notice of Arrival"},{"acronym":"AOR","meaning":"Address of Record"},{"acronym":"API","meaning":"Application Programming Interface"},{"acronym":"ARPA","meaning":"Automatic Radar Plotting Aid"},{"acronym":"ASI","meaning":"Annual Safety Inspection"},{"acronym":"B.A.","meaning":"British Admiralty"},{"acronym":"BCLC","meaning":"Bunker Certificate of Civil Liability"},{"acronym":"BCR","meaning":"Bareboat Charter Registration"},{"acronym":"BDN","meaning":"Bunker Delivery Note"},{"acronym":"BFA","meaning":"Block Fee Agreement"},{"acronym":"BNWAS","meaning":"Bridge Navigational Watch Alarm System"},{"acronym":"BW","meaning":"Ballast Water"},{"acronym":"BWM","meaning":"Ballast Water Management"},{"acronym":"BWMP","meaning":"Ballast Water Management Plan"},{"acronym":"BWRB","meaning":"Ballast Water Record Book"},{"acronym":"BWRF","meaning":"Ballast Water Reporting Form"},{"acronym":"BWTS","meaning":"Ballast Water Treatment System"},{"acronym":"C/N","meaning":"Change of Name"},{"acronym":"CAD","meaning":"Compliance Audits Division"},{"acronym":"CAR","meaning":"Corrective Action Request"},{"acronym":"CAS","meaning":"Condition Assessment Scheme"},{"acronym":"CBA","meaning":"Collective Bargaining Agreement"},{"acronym":"CC","meaning":"Confirmed Compliance"},{"acronym":"CEO","meaning":"Chief Executive Officer"},{"acronym":"CER","meaning":"Certifications"},{"acronym":"CFO","meaning":"Chief Financial Officer"},{"acronym":"CFR","meaning":"Code of Federal Regulations"},{"acronym":"CG","meaning":"Correspondence Group"},{"acronym":"CIC","meaning":"Casualty Investigation Code"},{"acronym":"CLC","meaning":"Civil Liability Convention 1969"},{"acronym":"CMA","meaning":"Connecticut Maritime Association"},{"acronym":"CMSA","meaning":"China Maritime Safety Administration"},{"acronym":"CNCP","meaning":"Cooperating Non-Contracting Party"},{"acronym":"CoC","meaning":"Certificate of Compliance"},{"acronym":"COE","meaning":"Certificate of Ownership and Encumbrance"},{"acronym":"COLREG","meaning":"Collision Regulations"},{"acronym":"COLREGS","meaning":"Collision Regulations at Sea 1972"},{"acronym":"COO","meaning":"Chief Operating Officer"},{"acronym":"COR","meaning":"Certificate of Registry"},{"acronym":"COSPAS-SARSAT","meaning":"Search and Rescue Satellite System"},{"acronym":"CRA","meaning":"Certificate of Receipt of Application"},{"acronym":"CSO","meaning":"Company Security Officer"},{"acronym":"CSR","meaning":"Continuous Synopsis Record"},{"acronym":"CTR","meaning":"Conformance Test Report"},{"acronym":"CV","meaning":"Conveyance"},{"acronym":"DCO","meaning":"Deputy Commissioner Office Liberia Maritime"},{"acronym":"DDA","meaning":"Draw Down Account"},{"acronym":"DMLC","meaning":"Declaration of Maritime Labour Compliance"},{"acronym":"DOC","meaning":"Document of Compliance"},{"acronym":"DOF","meaning":"Duty Officer"},{"acronym":"DPA","meaning":"Designated Person Ashore"},{"acronym":"DPP","meaning":"Detention Prevention Program"},{"acronym":"ECA","meaning":"Emission Control Area"},{"acronym":"ECDIS","meaning":"Electronic Chart Display and Information System"},{"acronym":"EFS","meaning":"Euro Flag Services"},{"acronym":"EPIRB","meaning":"Emergency Position Indicating Radio Beacon"},{"acronym":"ESAS","meaning":"Electronic Service Activation System"},{"acronym":"ETA","meaning":"Estimated Time of Arrival"},{"acronym":"FBCR","meaning":"Foreign Bareboat Charter Registration"},{"acronym":"FCN","meaning":"Treaty of Friendship Commerce and Navigation"},{"acronym":"FLNG","meaning":"Floating Liquefied Natural Gas"},{"acronym":"FME","meaning":"Foreign Maritime Entity"},{"acronym":"FO","meaning":"Fuel Oil"},{"acronym":"FP","meaning":"Fire Protection"},{"acronym":"FPSO","meaning":"Floating Production Storage and Offloading"},{"acronym":"FTP","meaning":"Transshipment"},{"acronym":"GISIS","meaning":"Global Integrated Shipping Information System"},{"acronym":"GMDSS","meaning":"Global Maritime Distress Safety System"},{"acronym":"GRT","meaning":"Gross Registered Tons"},{"acronym":"HK","meaning":"Hong Kong"},{"acronym":"HNS","meaning":"Hazardous and Noxious Substances"},{"acronym":"HR","meaning":"Human Resources"},{"acronym":"IA","meaning":"Internal Audit"},{"acronym":"IACS","meaning":"International Association of Classification Societies"},{"acronym":"IBRD","meaning":"International Beacon Registration Database"},{"acronym":"IBWMC","meaning":"International Ballast Water Management Certificate"},{"acronym":"IFSMA","meaning":"International Federation of Shipmasters Associations"},{"acronym":"IHM","meaning":"Inventory of Hazardous Materials"},{"acronym":"ILO","meaning":"International Labour Organization"},{"acronym":"IMN","meaning":"INMARSAT Mobile Number"},{"acronym":"IMO","meaning":"International Maritime Organization"},{"acronym":"IMSBC","meaning":"International Maritime Solid Bulk Cargoes Code"},{"acronym":"INMARSAT","meaning":"International Mobile Satellite Organization"},{"acronym":"INV","meaning":"Investigations"},{"acronym":"IRB","meaning":"Investigation Review Board"},{"acronym":"ISF","meaning":"International Shipping Federation"},{"acronym":"ISI","meaning":"Initial Safety Inspection"},{"acronym":"ISM","meaning":"International Safety Management"},{"acronym":"ISO","meaning":"International Organization for Standardization"},{"acronym":"ISPS","meaning":"International Ship and Port Facility Security Code"},{"acronym":"ISSC","meaning":"International Ship Security Certificate"},{"acronym":"IT","meaning":"Information Technology"},{"acronym":"ITC 69","meaning":"Tonnage Measurement Convention 1969"},{"acronym":"ITF","meaning":"International Transport Workers Federation"},{"acronym":"ITU","meaning":"International Telecommunication Union"},{"acronym":"JIP","meaning":"Joint Industry Project"},{"acronym":"KPI","meaning":"Key Performance Indicator"},{"acronym":"LA","meaning":"Liberian Auditor"},{"acronym":"LASP","meaning":"Statistics for Single time authorizations"},{"acronym":"LICOM","meaning":"Satellite Service Update"},{"acronym":"LIS","meaning":"Liberian Information System"},{"acronym":"LISCR","meaning":"Liberian International Ship and Corporate Registry"},{"acronym":"LL 66","meaning":"Load Line Convention 1966"},{"acronym":"LMA","meaning":"Liberia Maritime Authority"},{"acronym":"LNG","meaning":"Liquefied Natural Gas"},{"acronym":"LOU","meaning":"Letter of Understanding"},{"acronym":"LRIT","meaning":"Long Range Identification and Tracking"},{"acronym":"MA","meaning":"Marine Advisory"},{"acronym":"MAIIF","meaning":"Marine Accident Investigators International Forum"},{"acronym":"MAROPS","meaning":"Maritime Operations"},{"acronym":"MARPOL","meaning":"Marine Pollution Convention"},{"acronym":"MEPC","meaning":"Marine Environment Protection Committee"},{"acronym":"MIIPS","meaning":"Marine Inspection and Participation"},{"acronym":"MLC","meaning":"Maritime Labour Convention"},{"acronym":"MLC 2006","meaning":"Maritime Labour Convention 2006"},{"acronym":"MN","meaning":"Marine Notice"},{"acronym":"MODU","meaning":"Mobile Offshore Drilling Unit"},{"acronym":"MON","meaning":"Marine Operations Note"},{"acronym":"MOP","meaning":"Memorandum of Particulars"},{"acronym":"MOU","meaning":"Port State Control PSC"},{"acronym":"MSC","meaning":"Marine Safety Committee"},{"acronym":"MSDS","meaning":"Material Safety Data Sheet"},{"acronym":"MSI","meaning":"Maritime Safety Information"},{"acronym":"MSMC","meaning":"Minimum Safe Manning Certificate"},{"acronym":"NCAR","meaning":"Non-Conformity and Corrective Action Report"},{"acronym":"NFP","meaning":"Not For Profit"},{"acronym":"NYMAR","meaning":"New York Maritime"},{"acronym":"OFAC","meaning":"Office of Foreign Assets Control"},{"acronym":"OFI","meaning":"Opportunities for Improvement"},{"acronym":"ON","meaning":"Official Number"},{"acronym":"OPRC","meaning":"Oil Pollution Preparedness Response and Co-operation"},{"acronym":"OPS","meaning":"Operations"},{"acronym":"OSS","meaning":"On Scene Survey"},{"acronym":"OSV","meaning":"Offshore Support Vessel"},{"acronym":"P&I","meaning":"Protection and Indemnity Insurance"},{"acronym":"PC SOPEP","meaning":"Panama Canal Oil Pollution Emergency Plan"},{"acronym":"PFSO","meaning":"Port Facility Security Officer"},{"acronym":"PM","meaning":"Permanent Certificate of Registry"},{"acronym":"PMC","meaning":"Private Maritime Security Company"},{"acronym":"PMSC","meaning":"Private Marine Security Company"},{"acronym":"PSC","meaning":"Port State Control"},{"acronym":"PSCO","meaning":"Port State Control Officer"},{"acronym":"PV","meaning":"Provisional Certificate of Registry"},{"acronym":"Q1","meaning":"First Quarter"},{"acronym":"Q2","meaning":"Second Quarter"},{"acronym":"Q4","meaning":"Fourth Quarter"},{"acronym":"QAT","meaning":"Quality Audit Team"},{"acronym":"QM","meaning":"Quality Manager"},{"acronym":"QMS","meaning":"Quality Management System"},{"acronym":"QP","meaning":"Quality Procedures"},{"acronym":"QPS","meaning":"Quality Policy Statement"},{"acronym":"QSCS","meaning":"Quality System Certification Scheme"},{"acronym":"R&S","meaning":"Regulations and Standards"},{"acronym":"RCC","meaning":"Rescue Coordination Centre"},{"acronym":"REA","meaning":"Reinstatement Agreement"},{"acronym":"REG","meaning":"Vessel Registration"},{"acronym":"RFMO","meaning":"Regional Fisheries Management Organization"},{"acronym":"RL","meaning":"Republic of Liberia"},{"acronym":"RLM","meaning":"Republic of Liberia Manual"},{"acronym":"RLM-300","meaning":"Combined Publication Folder"},{"acronym":"RO","meaning":"Recognized Organization"},{"acronym":"ROL","meaning":"Republic of Liberia"},{"acronym":"ROV","meaning":"Remote Operated Vehicle"},{"acronym":"RSO","meaning":"Recognized Security Organization"},{"acronym":"RTMs","meaning":"Regional Technical Managers"},{"acronym":"SAR","meaning":"Search and Rescue"},{"acronym":"SCD","meaning":"Seafarers Certification and Documentation"},{"acronym":"SDC","meaning":"Ship Design and Construction"},{"acronym":"SEA","meaning":"Seafarers Electronic Application"},{"acronym":"SEEMP","meaning":"Ship Energy Efficiency Management Plan"},{"acronym":"SI","meaning":"Substantially Interested State"},{"acronym":"SMC","meaning":"Safety Management Certificate"},{"acronym":"SMM","meaning":"Safety Management Manual"},{"acronym":"SMPEP","meaning":"Shipboard Marine Pollution Emergency Plan"},{"acronym":"SMS","meaning":"Safety Management System"},{"acronym":"SOLAS","meaning":"International Convention for the Safety of Life at Sea"},{"acronym":"SOP","meaning":"Standard Operating Procedure"},{"acronym":"SOPEP","meaning":"Shipboard Oil Pollution Emergency Plan"},{"acronym":"SQC","meaning":"Special Qualification Certification"},{"acronym":"SRL","meaning":"Ship Radio License"},{"acronym":"SRPS","meaning":"Seafarer Recruitment and Placement Service"},{"acronym":"SRtP","meaning":"Safe Return to Port"},{"acronym":"SSA","meaning":"Ship Security Assessment"},{"acronym":"SSAS","meaning":"Ship Security Alert System"},{"acronym":"SSE","meaning":"Ship Systems and Equipment"},{"acronym":"SSO","meaning":"Ship Security Officer"},{"acronym":"SSP","meaning":"Ship Security Plan"},{"acronym":"STCW","meaning":"Standards of Training Certification and Watchkeeping for Seafarers"},{"acronym":"STS","meaning":"Ship to Ship"},{"acronym":"TA","meaning":"Temporary Authority Radio License"},{"acronym":"TID","meaning":"Tracking Identification"},{"acronym":"UN","meaning":"United Nations"},{"acronym":"UNCLOS","meaning":"United Nations Convention on the Law of the Sea"},{"acronym":"UNCTAD","meaning":"UN Conference on Trade and Development"},{"acronym":"US CFR","meaning":"US Code of Federal Regulations"},{"acronym":"USCG","meaning":"United States Coast Guard"},{"acronym":"VIMSAS","meaning":"IMO Member State Audit Scheme"},{"acronym":"VIP","meaning":"Very Important Person"},{"acronym":"VOC","meaning":"Volatile Organic Compound"},{"acronym":"VSMC","meaning":"Very Serious Marine Casualty"},{"acronym":"VTS","meaning":"Vessel Traffic Service"},{"acronym":"WI","meaning":"Work Instruction"},{"acronym":"WP","meaning":"Waypoint"},{"acronym":"WRC","meaning":"Wreck Removal Certificate"},{"acronym":"YTD","meaning":"Year to Date"},{"acronym":"Dos","meaning":"Duty Officers"}];
+  if(!confirm('Upload '+SEED.length+' acronyms?\nExisting ones will be skipped.'))return;
+  showLoad('Uploading...');
+  const existing=cachedAcrs.map(a=>a.acronym.toLowerCase());
+  const toAdd=SEED.filter(s=>!existing.includes(s.acronym.toLowerCase()));
+  let added=0,fail=0;
+  for(let i=0;i<toAdd.length;i++){
+    try{
+      const r=await fetch(`${SUPABASE_URL}/rest/v1/acronyms`,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({acronym:toAdd[i].acronym,meaning:toAdd[i].meaning,description:'',contact:'',link:'',image:''})});
+      if(r.ok)added++;else fail++;
+    }catch(e){fail++;}
+    document.getElementById('loading-txt').textContent=`Uploading ${i+1}/${toAdd.length}...`;
+  }
+  await loadAcrs();hideLoad();
+  alert(`Done! ${added} uploaded, ${SEED.length-toAdd.length} already existed, ${fail} failed.`);
+}
+
+// ══════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════
+loadTheme();
+loadLang();
+buildAZ();
+checkSession();
+loadAcrs();
+startRealtime();
+</script>
+</body>
+</html>
