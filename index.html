@@ -171,7 +171,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);min
     <p>Search any acronym or meaning to find its full definition</p>
     <div class="search-box">
       <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-      <input type="text" id="search-input" name="search" placeholder="Search acronyms, meanings..." oninput="filterGlossary(this.value)" autocomplete="off" />
+      <input type="text" id="search-input" name="search-liscr" placeholder="Search acronyms, meanings..." oninput="filterGlossary(this.value)" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" />
     </div>
     <div class="filter-row">
       <button class="fbtn active" onclick="setFilter('all',this)">All <span id="count-lbl"></span></button>
@@ -924,10 +924,13 @@ loadTheme();
 loadLang();
 buildAZ();
 checkSession();
-// Clear search box in case browser autofilled it
-document.getElementById('search-input').value = '';
 loadAcrs();
 startRealtime();
+// Force clear search box after browser autofill
+setTimeout(()=>{ 
+  const s = document.getElementById('search-input'); 
+  if(s){ s.value=''; s.placeholder='Search acronyms, meanings...'; }
+}, 500);
 </script>
 </body>
 </html>
