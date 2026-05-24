@@ -171,7 +171,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);min
     <p>Search any acronym or meaning to find its full definition</p>
     <div class="search-box">
       <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-      <input type="text" id="search-input" placeholder="Search acronyms, meanings..." oninput="filterGlossary(this.value)" />
+      <input type="text" id="search-input" name="search" placeholder="Search acronyms, meanings..." oninput="filterGlossary(this.value)" autocomplete="off" />
     </div>
     <div class="filter-row">
       <button class="fbtn active" onclick="setFilter('all',this)">All <span id="count-lbl"></span></button>
@@ -603,21 +603,76 @@ async function sendAI(){
   addBubble('user',q);addTyping();
   aiHistory.push({role:'user',content:q});
   const acrCtx=cachedAcrs.slice(0,150).map(a=>`${a.acronym}: ${a.meaning}`).join('; ');
-  const sys=`You are a maritime AI assistant for LISCR. ONLY answer maritime/LISCR questions. If not maritime related say: I can only answer maritime and LISCR related questions. LISCR acronyms: ${acrCtx}. Be concise and professional.`;
+  const sys=`You are a maritime AI assistant for LISCR (Liberian International Ship and Corporate Registry). ONLY answer questions about maritime industry, shipping, IMO regulations (SOLAS, MARPOL, STCW, MLC, ISPS, ISM), LISCR operations, Port State Control, seafarers, and ship management. If asked anything NOT maritime related, say: I can only answer maritime and LISCR related questions. LISCR acronyms reference: ${acrCtx}. Be concise and professional. Plain text only.`;
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:600,system:sys,messages:aiHistory})});
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer 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',
+        'Access-Control-Allow-Origin':'*'
+      },
+      body:JSON.stringify({
+        model:'llama3-8b-8192',
+        messages:[{role:'system',content:sys},...aiHistory],
+        max_tokens:600,
+        temperature:0.3
+      })
+    });
+    if(!res.ok) throw new Error('HTTP '+res.status);
     const data=await res.json();
     document.getElementById('ai-typing')?.remove();
     if(data.error)throw new Error(data.error.message);
-    const reply=data.content?.[0]?.text||'No response.';
+    const reply=data.choices?.[0]?.message?.content||'No response.';
     aiHistory.push({role:'assistant',content:reply});
     if(aiHistory.length>20)aiHistory=aiHistory.slice(-20);
     addBubble('ai',reply);
   }catch(e){
     document.getElementById('ai-typing')?.remove();
-    addBubble('ai','⚠️ AI unavailable right now. Please try again shortly.');
+    // Smart offline fallback - search acronym data
+    const reply = smartOfflineAnswer(q);
+    aiHistory.push({role:'assistant',content:reply});
+    addBubble('ai',reply);
+    console.error('AI error:',e);
   }
   btn.disabled=false;btn.textContent='Send';
+}
+
+function smartOfflineAnswer(q){
+  const query = q.toLowerCase();
+  // Search in cached acronyms
+  const matches = cachedAcrs.filter(a=>
+    a.acronym.toLowerCase()===query ||
+    a.acronym.toLowerCase().includes(query) ||
+    a.meaning.toLowerCase().includes(query) ||
+    (a.description && a.description.toLowerCase().includes(query))
+  ).slice(0,3);
+  if(matches.length){
+    let answer = '📖 From LISCR Acronym Database:\n\n';
+    matches.forEach(a=>{
+      answer += `${a.acronym} — ${a.meaning}`;
+      if(a.description) answer += `\n${a.description}`;
+      answer += '\n\n';
+    });
+    answer += '(AI assistant temporarily unavailable — showing database results)';
+    return answer;
+  }
+  // Built-in maritime answers
+  const kb = {
+    'solas':'SOLAS (International Convention for the Safety of Life at Sea) is the most important international treaty covering the safety of merchant ships. It sets minimum safety standards in construction, equipment and operation of ships.',
+    'marpol':'MARPOL (Marine Pollution Convention) is the main international convention covering prevention of pollution of the marine environment by ships from operational or accidental causes.',
+    'ism':'The ISM Code (International Safety Management Code) provides an international standard for the safe management and operation of ships and for pollution prevention.',
+    'isps':'The ISPS Code (International Ship and Port Facility Security Code) is a set of measures to enhance the security of ships and port facilities.',
+    'stcw':'STCW (Standards of Training, Certification and Watchkeeping) sets minimum qualification standards for masters, officers and watch personnel on seagoing merchant ships.',
+    'mlc':'MLC (Maritime Labour Convention 2006) establishes minimum working and living standards for seafarers working on ships internationally.',
+    'psc':'Port State Control (PSC) is the inspection of foreign ships in national ports to verify the condition of the ship and its equipment, and the certification of the crew.',
+    'dpa':'DPA (Designated Person Ashore) is a person ashore with direct access to the highest level of management, responsible for monitoring the safety and pollution prevention aspects of ship operations.',
+    'liscr':'LISCR (Liberian International Ship and Corporate Registry) administers the Liberian ship and corporate registry, the second largest ship registry in the world.',
+  };
+  for(const [key,val] of Object.entries(kb)){
+    if(query.includes(key)) return val + '\n\n(AI assistant temporarily unavailable — showing built-in response)';
+  }
+  return '⚠️ AI assistant is temporarily unavailable. Please try again later.\n\nYou can search for acronyms directly in the Glossary tab.';
 }
 
 // ══════════════════════════════════════
@@ -869,6 +924,8 @@ loadTheme();
 loadLang();
 buildAZ();
 checkSession();
+// Clear search box in case browser autofilled it
+document.getElementById('search-input').value = '';
 loadAcrs();
 startRealtime();
 </script>
